@@ -5,10 +5,10 @@ import com.example.demo.schemaprovider.annotation.SchemaDefinition;
 
 import java.lang.reflect.Field;
 
-public class OriginalEntityMetaModel extends EntityMetadataModel {
+public class JavaTypeMetaModel extends EntityMetadataModel implements RootMetaModel {
 
 
-    public OriginalEntityMetaModel(Class<?> assignableClass, Field columnField) {
+    public JavaTypeMetaModel(Class<?> assignableClass, Field columnField) {
         super(columnField, assignableClass);
     }
 
@@ -27,7 +27,6 @@ public class OriginalEntityMetaModel extends EntityMetadataModel {
         }
         return columnName.columnName();
     }
-
 
 
 }
