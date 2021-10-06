@@ -1,31 +1,38 @@
 package com.example.demo.schemaprovider.metamodel;
 
-import com.example.demo.schemaprovider.EntityMetaParser;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class CommonSchemaModel {
 
-    protected Map<String, MetaDataModel> pathMapping = new HashMap<>();
+    protected Map<String[], MetaDataModel> pathMapping = new HashMap<>();
     private Class<?> reflectedClass;
 
 
     public CommonSchemaModel(Class<?> reflectedClass, List<MetaDataModel> metaDataModels) {
         this.reflectedClass = reflectedClass;
         metaDataModels.forEach(metaDataModel -> {
-            pathMapping.put(metaDataModel.getPath(), metaDataModel);
+            pathMapping.put(metaDataModel.getMetaDataDefinition(), metaDataModel);
         });
     }
 
-    public MetaDataModel getRelatedMetaDataBy(String pathName)
-    {
-        return this.pathMapping.getOrDefault(pathName, null);
+    public List<String[]> getPaths() {
+        return new ArrayList<>(this.pathMapping.keySet());
     }
 
-    public String getRelationBy(String pathName) {
-        return this.getRelatedMetaDataBy(pathName).getPath();
+    public Object[] getColumnsName() {
+        this.pathMapping
+                .values()
+                .stream()
+                .map(MetaDataModel::getMetaDataDefinition)
+                .forEach(strings -> System.out.println(Arrays.toString(strings)));
+        return null;
     }
 
+    public Object getValue(String schemaDefinition) {
+        return this.pathMapping
+                .values()
+                .stream()
+                .map(MetaDataModel::getMetaDataDefinition);
+    }
 }

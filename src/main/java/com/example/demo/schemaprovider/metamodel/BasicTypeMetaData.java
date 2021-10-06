@@ -5,10 +5,10 @@ import com.example.demo.schemaprovider.annotation.SchemaDefinition;
 
 import java.lang.reflect.Field;
 
-public class JavaTypeMetaModel extends EntityMetadataModel implements RootMetaModel {
+public class BasicTypeMetaData extends EntityMetadataModel {
 
 
-    public JavaTypeMetaModel(Class<?> assignableClass, Field columnField) {
+    public BasicTypeMetaData(Class<?> assignableClass, Field columnField) {
         super(columnField, assignableClass);
     }
 
@@ -20,12 +20,12 @@ public class JavaTypeMetaModel extends EntityMetadataModel implements RootMetaMo
         return this.metaField.get(originalObject);
     }
 
-    public String getMetaDataDefinition() {
+    public String[] getMetaDataDefinition() {
         SchemaDefinition columnName = this.metaField.getDeclaredAnnotation(SchemaDefinition.class);
         if (columnName == null) {
             throw new IllegalStateException("Field should be annotated with @SchemaDefinition");
         }
-        return columnName.columnName();
+        return columnName.columnNames();
     }
 
 

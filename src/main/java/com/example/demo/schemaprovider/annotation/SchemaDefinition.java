@@ -11,7 +11,12 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface SchemaDefinition {
 
-    public String columnName() default "";
+    String[] headerNames() default "";
 
+    boolean isJoined() default false;
+
+    Class<?> refJoinedClass() default Object.class;
+
+    Class<?> refDecorator() default Object.class;
 
 }

@@ -1,10 +1,7 @@
 package com.example.demo.schemaprovider.metamodel;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 public abstract class EntityMetadataModel implements MetaDataModel {
 
@@ -17,8 +14,10 @@ public abstract class EntityMetadataModel implements MetaDataModel {
         this.assignableClass = assignableClass;
 
     }
+
     public String getPath() {
-        return this.metaField.getName();
+        String entityName = this.assignableClass.getSimpleName().toLowerCase(Locale.getDefault());
+        return String.join(".", entityName, this.metaField.getName());
     }
 
 }
