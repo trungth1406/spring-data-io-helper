@@ -3,54 +3,116 @@ package com.trungth14.io.export;
 import com.trungth14.io.schemaprovider.ExternalValueProvider;
 import com.trungth14.io.schemaprovider.metamodel.CommonSchema;
 import com.trungth14.io.schemaprovider.metamodel.MappedSchema;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class ExcelFileExporter implements StreamExport {
+public final class ExcelFileExporter implements ExcelExportable {
 
     protected final CommonSchema mappedSchema;
-    protected final ExternalValueProvider externalValueProvider;
     protected final ExportProperty exportProperty;
 
-    protected ExcelFileExporter(Class<?> fromClass,
-                                ExternalValueProvider externalValueProvider,
-                                ExportProperty exportProperty) throws IllegalAccessException {
+    public ExcelFileExporter(Class<?> fromClass,
+                             ExternalValueProvider externalValueProvider,
+                             ExportProperty exportProperty) throws IllegalAccessException {
         this.exportProperty = exportProperty;
         this.mappedSchema = MappedSchema.from(fromClass, externalValueProvider);
-        this.externalValueProvider = externalValueProvider;
     }
 
-    protected abstract Workbook newWorkBook();
+    public ExcelFileExporter(Class<?> fromClass,
+                             ExportProperty exportProperty) throws IllegalAccessException {
+        this.exportProperty = exportProperty;
+        this.mappedSchema = MappedSchema.from(fromClass, Collections::emptyMap);
+    }
+
+    protected Workbook newWorkBook() {
+        switch (this.exportProperty.getFileType()) {
+            case XLSX:
+                return new SXSSFWorkbook(100);
+            default:
+                throw new IllegalArgumentException("Type not supported");
+        }
+    }
 
     @Override
     public void export(List<?> fromCollection, OutputStream toOutputStream) {
-        Workbook currentWorkBook = this.newWorkBook();
+        try {
+            Workbook currentWorkBook = this.newWorkBook();
+            this.prepareWorkbook(fromCollection, currentWorkBook);
+            currentWorkBook.write(toOutputStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void prepareWorkbook(List<?> fromCollection, Workbook currentWorkBook) throws Exception {
         Integer rowPerSheet = exportProperty.getRowPerSheet();
         List<String> expectedHeaders = exportProperty.getExpectedHeaders();
         String sheetPrefix = exportProperty.getSheetPrefix();
         if (exportProperty.getRowPerSheet() != 0) {
             if (fromCollection.size() <= rowPerSheet) {
                 int totalSheets = fromCollection.size() / exportProperty.getRowPerSheet();
+                int start = 0;
+                int end = exportProperty.getRowPerSheet();
+                for (int i = 0; i < totalSheets; i++) {
+                    List<?> subList = fromCollection.subList(start, end);
+                    this.newSheet(expectedHeaders, subList, sheetPrefix, currentWorkBook, i);
+                    start += subList.size();
+                }
             } else {
-                this.newSheet(expectedHeaders, fromCollection, sheetPrefix, currentWorkBook);
-            }
 
+            }
+        } else {
+            this.newSheet(expectedHeaders, fromCollection, sheetPrefix, currentWorkBook, -1);
+        }
+    }
+
+    protected void newSheet(List<String> expectedHeaders, List<?> fromCollection,
+                            String sheetPrefix, Workbook currentWorkBook,
+                            int sheetNumber) throws Exception {
+        Sheet sheet = this.applySheetName(sheetPrefix, currentWorkBook, sheetNumber);
+        this.createHeaderRows(sheet, expectedHeaders);
+        // Per record
+        boolean isNewRow;
+        for (int i = 0; i < fromCollection.size(); i++) {
+            // Per row
+            Object currentRecord = fromCollection.get(i);
+            Row row;
+            isNewRow = true;
+            for (int j = 0; j < expectedHeaders.size(); j++) {
+                row = sheet.createRow(i + 1);
+                Cell currentCell = row.createCell(j);
+                String currentHeader = expectedHeaders.get(j);
+                Object cellValue = this.mappedSchema.valueByHeader(currentHeader, currentRecord, isNewRow);
+                if (cellValue == null) {
+                    currentCell.setBlank();
+                } else {
+                    currentCell.setCellValue(cellValue.toString());
+                }
+                isNewRow = false;
+            }
         }
 
     }
 
-    private void newSheet(List<String> expectedHeaders, List<?> fromCollection,
-                          String sheetPrefix, Workbook currentWorkBook) {
-        Sheet sheet = currentWorkBook.createSheet();
-        this.createHeaderRows(sheet, expectedHeaders);
-        for (int i = 0; i < expectedHeaders.size(); i++) {
-
+    private Sheet applySheetName(String sheetPrefix, Workbook currentWorkBook, int sheetNumber) {
+        Sheet sheet;
+        if (!sheetPrefix.isBlank()) {
+            if (sheetNumber == -1) {
+                sheet = currentWorkBook.createSheet(sheetPrefix);
+            } else {
+                sheet = currentWorkBook.createSheet(sheetPrefix + "-" + sheetNumber);
+            }
+        } else {
+            sheet = currentWorkBook.createSheet();
         }
+        return sheet;
     }
 
     private void createHeaderRows(Sheet sheet, List<String> expectedHeaders) {
@@ -64,7 +126,9 @@ public abstract class ExcelFileExporter implements StreamExport {
 
 
     @Override
-    public void export(List<?> fromCollection) {
-
+    public Workbook export(List<?> fromCollection) throws Exception {
+        Workbook workbook = this.newWorkBook();
+        this.prepareWorkbook(fromCollection, workbook);
+        return workbook;
     }
 }

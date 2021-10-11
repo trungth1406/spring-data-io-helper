@@ -30,6 +30,7 @@ public abstract class AbstractMetaDataModel implements MetaData {
             throw new IllegalStateException("Owned class instance of type : " + this.assignableClass.getSimpleName()
                     + "should be passed to a Joined type ");
         }
+        this.metaField.setAccessible(true);
         return this.metaField.get(originalObject);
     }
 
