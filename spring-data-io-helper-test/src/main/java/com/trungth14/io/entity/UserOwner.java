@@ -2,11 +2,20 @@ package com.trungth14.io.entity;
 
 
 import com.trungth14.io.schemaprovider.annotation.SchemaDefinition;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 
+
+@Getter
+@Setter
 @Table(name = "user_owner")
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserOwner {
 
     @Id

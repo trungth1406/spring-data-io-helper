@@ -3,6 +3,8 @@ package com.trungth14.io.schemaprovider.metamodel;
 
 import com.trungth14.io.schemaprovider.ExternalValueProvider;
 import com.trungth14.io.schemaprovider.metamodel.metadata.MetaData;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class MappedSchema implements CommonSchema {
+public final class MappedSchema implements CommonSchema {
 
     private final Map<String, MetaData> pathMapping = new HashMap<>();
     private final Map<String, Function<Object, Object>> externalValuePathMapping = new HashMap<>();
@@ -55,14 +57,14 @@ public class MappedSchema implements CommonSchema {
 
     // A little optimization for reuse external Value mapping
     @Override
-    public Object valueByHeader(String columnName, Object originalObject, boolean newRow) throws Exception {
+    public Object valueByHeader(String headerName, Object originalObject, boolean newRow) throws Exception {
         // Get associated meta data representation
-        MetaData metaData = this.pathMapping.get(columnName);
+        MetaData metaData = this.pathMapping.get(headerName);
         if (metaData == null) return null;
         if (newRow) {
             cachedExternalValue.clear();
         }
-        Function<Object, Object> callBackFunc = this.externalValuePathMapping.get(columnName);
+        Function<Object, Object> callBackFunc = this.externalValuePathMapping.get(headerName);
         if (callBackFunc != null) {
             return applyExternalValueMapping(originalObject, callBackFunc, metaData, newRow);
         }

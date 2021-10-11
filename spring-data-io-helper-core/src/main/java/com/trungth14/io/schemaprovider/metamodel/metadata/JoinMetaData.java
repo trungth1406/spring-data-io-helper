@@ -6,6 +6,7 @@ import org.apache.maven.surefire.shade.org.apache.commons.lang3.ArrayUtils;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 public class JoinMetaData extends AbstractMetaDataModel {
 
@@ -25,12 +26,16 @@ public class JoinMetaData extends AbstractMetaDataModel {
                 .stream()
                 .map(MetaData::getMetaDataDefinition)
                 .reduce(ArrayUtils::addAll)
-                .map(strings -> {
-                    if (expectedHeaders.length == 0) return strings;
-                    Arrays.asList(expectedHeaders).retainAll(Arrays.asList(strings));
-                    return expectedHeaders;
-                })
+                .map(filterRequiredColumns(expectedHeaders))
                 .orElse(new String[0]);
+    }
+
+    private Function<String[], String[]> filterRequiredColumns(String[] expectedHeaders) {
+        return strings -> {
+            if (expectedHeaders.length == 0) return strings;
+            Arrays.asList(expectedHeaders).retainAll(Arrays.asList(strings));
+            return expectedHeaders;
+        };
     }
 
     @Override
