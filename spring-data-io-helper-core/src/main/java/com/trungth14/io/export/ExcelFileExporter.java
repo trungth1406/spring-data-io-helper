@@ -18,18 +18,21 @@ public final class ExcelFileExporter implements ExcelExportable {
     protected final CommonSchema mappedSchema;
     protected final ExportProperty exportProperty;
 
-    public ExcelFileExporter(Class<?> fromClass,
-                             ExternalValueProvider externalValueProvider,
-                             ExportProperty exportProperty) throws IllegalAccessException {
-        this.exportProperty = exportProperty;
-        this.mappedSchema = MappedSchema.from(fromClass, externalValueProvider);
-    }
 
     public ExcelFileExporter(Class<?> fromClass,
                              ExportProperty exportProperty) throws IllegalAccessException {
         this.exportProperty = exportProperty;
         this.mappedSchema = MappedSchema.from(fromClass, Collections::emptyMap);
     }
+
+
+    public ExcelFileExporter(Class<?> fromClass,
+                             ExportProperty exportProperty,
+                             ExternalValueProvider externalValueProvider) throws IllegalAccessException {
+        this.exportProperty = exportProperty;
+        this.mappedSchema = MappedSchema.from(fromClass, externalValueProvider);
+    }
+
 
     protected Workbook newWorkBook() {
         switch (this.exportProperty.getFileType()) {
@@ -83,11 +86,11 @@ public final class ExcelFileExporter implements ExcelExportable {
         for (int i = 0; i < fromCollection.size(); i++) {
             // Per row
             Object currentRecord = fromCollection.get(i);
-            Row row;
+            Row row = sheet.createRow(i + 1);
             isNewRow = true;
+            Cell currentCell;
             for (int j = 0; j < expectedHeaders.size(); j++) {
-                row = sheet.createRow(i + 1);
-                Cell currentCell = row.createCell(j);
+                currentCell = row.createCell(j);
                 String currentHeader = expectedHeaders.get(j);
                 Object cellValue = this.mappedSchema.valueByHeader(currentHeader, currentRecord, isNewRow);
                 if (cellValue == null) {

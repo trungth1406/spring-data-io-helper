@@ -33,7 +33,7 @@ class ExcelFileExporterTest {
                 .withSheetPrefix("Demo")
                 .build();
         StreamExport streamExport =
-                new ExcelFileExporter(User.class, valueProvider, exportProperty);
+                new ExcelFileExporter(User.class, exportProperty, valueProvider);
         Faker faker = new Faker();
         List<User> users = IntStream.range(1, 100_000).mapToObj(i -> {
             User user = new User();
